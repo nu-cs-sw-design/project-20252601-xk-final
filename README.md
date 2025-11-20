@@ -1,10 +1,10 @@
-# Project: NAME
+# Project: Java Linter
 
 ## Contributors
-NAME, NAME, NAME
+Xavier Khan
 
 ## Dependencies
-- LANGUAGE AND VERSION
+- Java OpenJDK 21
 - EXTERNAL LIBRARIES
 - ETC
 
