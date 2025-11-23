@@ -1,2 +1,107 @@
 @startuml
+package presentation
+{
+    +class Main
+    {
+        +main(args : String[]) : void
+    }
+}
+
+package domain
+{
+    package stylecheck
+    {
+        +class StyleRevisionClassVisitor
+        {
+            -revisers : List<ClassStyleReviser>
+            -revisionPrinter : StyleRevisionPrinter
+
+            +StyleRevisionClassVisitor()
+
+            +addStyleReviser(reviser : ClassStyleReviser) : void
+            +removeStyleReviser(reviser : ClassStyleReviser) : void
+            +setRevisionPrinter(printer : StyleRevisionPrinter) : void
+            +visitField(…) : FieldVisitor
+            +visitMethod(…) : MethodVisitor
+            +visitInnerClass(…) : void
+        }
+
+        ~interface ClassStyleChecker
+        {
+            ~{abstract} checkClassName(name : String) : boolean
+            ~{abstract} checkVariableOrMethodName(name : String) : boolean
+            ~{abstract} checkStaticConstantName(name : String) : boolean
+        }
+
+        ~abstract class ClassStyleReviser
+        {
+            -revisions : List<StyleRevision>
+
+            ~{abstract} checkClassName(name : String) : boolean
+            ~{abstract} checkVariableOrMethodName(name : String) : boolean
+            ~{abstract} checkStaticConstantName(name : String) : boolean
+            ~{final} getRevisions() : List<StyleCheckRevision>
+        }
+
+        +class NamingConventionStyleReviser
+        {
+            ~checkClassName(name : String) : boolean
+            ~checkVariableOrMethodName(name : String) : boolean
+            ~checkStaticConstantName(name : String) : boolean
+        }
+
+        +class ReadableNamingStyleReviser
+        {
+            ~checkClassName(name : String) : boolean
+            ~checkVariableOrMethodName(name : String) : boolean
+            ~checkStaticConstantName(name : String) : boolean
+            -checkReadability(name : String) : boolean
+        }
+
+        ~class StyleRevision
+        {
+            -issueLocation : String
+            -issueDetails : String
+            -suggestedFix : String
+
+            ~StyleRevision(issueLocation, issueDetails, suggestedFix)
+
+            ~getIssueLocation() : String
+            ~getIssueDetails() : String
+            ~getSuggestedFix() : String
+        }
+
+        ~interface StyleRevisionPrinter
+        {
+            ~{abstract} print(revision : StyleRevision, to : OutputStream) : void
+        }
+
+        ~class BasicStyleRevisionPrinter
+        {
+            ~print(revision : StyleCheckRevision, to : OutputStream) : void
+        }
+    }
+}
+
+package datasource
+{
+
+}
+
+package asm
+{
+    +abstract class ClassVisitor
+    {
+    }
+}
+
+StyleRevisionClassVisitor --|> ClassVisitor
+StyleRevisionClassVisitor --> ClassStyleReviser
+StyleRevisionClassVisitor --> StyleRevisionPrinter
+NamingConventionStyleReviser --|> ClassStyleReviser
+ReadableNamingStyleReviser --|> ClassStyleReviser
+ClassStyleReviser ..|> ClassStyleChecker
+ClassStyleReviser --> StyleRevision
+StyleRevisionPrinter ..> StyleRevision
+BasicStyleRevisionPrinter ..|> StyleRevisionPrinter
 @enduml
