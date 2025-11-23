@@ -11,12 +11,12 @@ package domain
 {
     package stylecheck
     {
-        +class StyleRevisionClassVisitor
+        +class StyleRevisionClassPrinter
         {
             -revisers : List<ClassStyleReviser>
             -revisionPrinter : StyleRevisionPrinter
 
-            +StyleRevisionClassVisitor()
+            +StyleRevisionClassPrinter()
 
             +addStyleReviser(reviser : ClassStyleReviser) : void
             +removeStyleReviser(reviser : ClassStyleReviser) : void
@@ -24,7 +24,12 @@ package domain
             +visitField(…) : FieldVisitor
             +visitMethod(…) : MethodVisitor
             +visitInnerClass(…) : void
+            +visitEnd() : void
         }
+        note left of StyleRevisionClassPrinter::visitEnd
+          get all the revisions from each reviser
+          and print using the revisionPrinter
+        end note
 
         ~interface ClassStyleChecker
         {
@@ -95,9 +100,9 @@ package asm
     }
 }
 
-StyleRevisionClassVisitor --|> ClassVisitor
-StyleRevisionClassVisitor --> ClassStyleReviser
-StyleRevisionClassVisitor --> StyleRevisionPrinter
+StyleRevisionClassPrinter --|> ClassVisitor
+StyleRevisionClassPrinter --> ClassStyleReviser
+StyleRevisionClassPrinter --> StyleRevisionPrinter
 NamingConventionStyleReviser --|> ClassStyleReviser
 ReadableNamingStyleReviser --|> ClassStyleReviser
 ClassStyleReviser ..|> ClassStyleChecker
