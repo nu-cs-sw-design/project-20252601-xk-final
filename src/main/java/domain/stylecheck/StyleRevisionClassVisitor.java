@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,8 +39,23 @@ public class StyleRevisionClassVisitor extends ClassVisitor {
     @Override
     @Nullable
     public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-        // TODO : distinguish static vs object field
-        revisers.forEach(reviser -> reviser.checkVariableOrMethodName(name));
+
+        // Define list of access constants that should use the static constant check
+        List<Integer> constantFieldOpcodes = List.of(
+                Opcodes.ACC_STATIC + Opcodes.ACC_FINAL,
+                Opcodes.ACC_STATIC + Opcodes.ACC_PUBLIC + Opcodes.ACC_FINAL,
+                Opcodes.ACC_STATIC + Opcodes.ACC_PRIVATE + Opcodes.ACC_FINAL,
+                Opcodes.ACC_STATIC + Opcodes.ACC_PROTECTED + Opcodes.ACC_FINAL
+        );
+
+        // Do appropriate style check
+        if (constantFieldOpcodes.contains(access)) {
+            revisers.forEach(reviser -> reviser.checkStaticConstantName(name));
+        }
+        else {
+            revisers.forEach(reviser -> reviser.checkVariableOrMethodName(name));
+        }
+
         return null;
     }
 
@@ -48,6 +64,11 @@ public class StyleRevisionClassVisitor extends ClassVisitor {
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
         revisers.forEach(reviser -> reviser.checkVariableOrMethodName(name));
         return null;
+    }
+
+    @Override
+    public void visitInnerClass(String name, String outerName, String innerName, int access) {
+        revisers.forEach(reviser -> reviser.checkClassName(getLocalClassName(name)));
     }
 
     @Override
@@ -64,15 +85,19 @@ public class StyleRevisionClassVisitor extends ClassVisitor {
         }
     }
 
+    // Helper method for turning ASM internal class name into raw local class name as seen in source code
     @Nullable
     private String getLocalClassName(String internalName) {
+
         if (internalName.isEmpty() || internalName.endsWith("/")) {
             return null;
         }
-        int cutoff = internalName.lastIndexOf('/');
+
+        int cutoff = Math.max(internalName.lastIndexOf('/'), internalName.lastIndexOf('$'));
         if (cutoff < 0) {
             return internalName;
         }
+
         return internalName.substring(cutoff + 1);
     }
 

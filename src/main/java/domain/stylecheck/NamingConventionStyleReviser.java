@@ -13,13 +13,10 @@ public class NamingConventionStyleReviser extends ClassStyleReviser {
 
         char[] nameCharArray = name.toCharArray();
         StringBuilder fixedNameBuilder = new StringBuilder();
-        int length = nameCharArray.length;
 
         // Copy the name into the new list with some checks
         boolean foundLetter = false;
-        for (int i = 0; i < length; i++) {
-
-            char c = nameCharArray[i];
+        for (char c : nameCharArray) {
 
             // Skip bad characters
             if (c == '_' || c == '$')
@@ -70,13 +67,10 @@ public class NamingConventionStyleReviser extends ClassStyleReviser {
 
         char[] nameCharArray = name.toCharArray();
         StringBuilder fixedNameBuilder = new StringBuilder();
-        int length = nameCharArray.length;
 
         // Copy the name into the new list with some checks
         boolean foundLetter = false;
-        for (int i = 0; i < length; i++) {
-
-            char c = nameCharArray[i];
+        for (char c : nameCharArray) {
 
             // Skip bad characters
             if (c == '_' || c == '$')
@@ -143,8 +137,14 @@ public class NamingConventionStyleReviser extends ClassStyleReviser {
 
             // Check if character is letter and record that
             // Make letters uppercase
+            // Insert '_' if letter is already uppercase and previous letter is lowercase
             if (Character.isLetter(c)) {
-                c = Character.toUpperCase(c);
+                if (i > 0 && Character.isUpperCase(c) && Character.isLowerCase(nameCharArray[i - 1])) {
+                    fixedNameBuilder.append('_');
+                }
+                else {
+                    c = Character.toUpperCase(c);
+                }
                 foundLetter = true;
             }
 
