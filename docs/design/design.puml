@@ -11,12 +11,12 @@ package domain
 {
     package stylecheck
     {
-        +class StyleRevisionClassPrinter
+        +class StyleRevisionClassVisitor
         {
             -revisers : List<ClassStyleReviser>
             -revisionPrinter : StyleRevisionPrinter
 
-            +StyleRevisionClassPrinter()
+            +StyleRevisionClassVisitor()
 
             +addStyleReviser(reviser : ClassStyleReviser) : void
             +removeStyleReviser(reviser : ClassStyleReviser) : void
@@ -25,18 +25,12 @@ package domain
             +visitMethod(…) : MethodVisitor
             +visitInnerClass(…) : void
             +visitEnd() : void
+            -getLocalClassName(internalName : String) : String
         }
-        note left of StyleRevisionClassPrinter::visitEnd
+        note left of StyleRevisionClassVisitor::visitEnd
           get all the revisions from each reviser
           and print using the revisionPrinter
         end note
-
-        ~interface ClassStyleChecker
-        {
-            ~{abstract} checkClassName(name : String) : boolean
-            ~{abstract} checkVariableOrMethodName(name : String) : boolean
-            ~{abstract} checkStaticConstantName(name : String) : boolean
-        }
 
         ~abstract class ClassStyleReviser
         {
@@ -45,7 +39,9 @@ package domain
             ~{abstract} checkClassName(name : String) : boolean
             ~{abstract} checkVariableOrMethodName(name : String) : boolean
             ~{abstract} checkStaticConstantName(name : String) : boolean
-            ~{final} getRevisions() : List<StyleCheckRevision>
+            ~{final} saveRevision(revision : StyleRevision) : void
+            ~{final} getRevisions() : List<StyleRevision>
+            ~{final} validateNameInput(name : String) : void
         }
 
         +class NamingConventionStyleReviser
@@ -69,21 +65,30 @@ package domain
             -issueDetails : String
             -suggestedFix : String
 
-            ~StyleRevision(issueLocation, issueDetails, suggestedFix)
-
             ~getIssueLocation() : String
             ~getIssueDetails() : String
             ~getSuggestedFix() : String
         }
 
-        ~interface StyleRevisionPrinter
+        ~class StyleRevision::Builder <<static>>
         {
+            ~withIssueLocation(issueLocation : String) : StyleRevision::Builder
+            ~withIssueType(issueType : String) : StyleRevision::Builder
+            ~withSuggestedFix(suggestedFix : String) : StyleRevision::Builder
+            ~build() : StyleRevision
+        }
+
+        ~abstract class StyleRevisionPrinter
+        {
+            -output : OutputStream
+
+            ~StyleRevisionPrinter(output : OutputStream)
             ~{abstract} print(revision : StyleRevision, to : OutputStream) : void
         }
 
         ~class BasicStyleRevisionPrinter
         {
-            ~print(revision : StyleCheckRevision, to : OutputStream) : void
+            ~print(revision : StyleRevision, to : OutputStream) : void
         }
     }
 }
@@ -100,13 +105,13 @@ package asm
     }
 }
 
-StyleRevisionClassPrinter --|> ClassVisitor
-StyleRevisionClassPrinter --> ClassStyleReviser
-StyleRevisionClassPrinter --> StyleRevisionPrinter
+StyleRevisionClassVisitor --|> ClassVisitor
+StyleRevisionClassVisitor --> ClassStyleReviser
+StyleRevisionClassVisitor --> StyleRevisionPrinter
 NamingConventionStyleReviser --|> ClassStyleReviser
 ReadableNamingStyleReviser --|> ClassStyleReviser
-ClassStyleReviser ..|> ClassStyleChecker
+StyleRevision +-- StyleRevision::Builder
 ClassStyleReviser --> StyleRevision
 StyleRevisionPrinter ..> StyleRevision
-BasicStyleRevisionPrinter ..|> StyleRevisionPrinter
+BasicStyleRevisionPrinter --|> StyleRevisionPrinter
 @enduml
