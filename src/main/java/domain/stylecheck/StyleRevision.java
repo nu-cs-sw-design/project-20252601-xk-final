@@ -2,9 +2,14 @@ package domain.stylecheck;
 
 class StyleRevision {
 
+    private String originalName = "";
     private String issueType = "";
     private String issueDetails = "";
     private String suggestedFix = "";
+
+    String getOriginalName() {
+        return originalName;
+    }
 
     String getIssueType() {
         return issueType;
@@ -21,6 +26,11 @@ class StyleRevision {
     static class Builder {
 
         private final StyleRevision revision = new StyleRevision();
+
+        Builder withOriginalName(String originalName) {
+            revision.originalName = originalName;
+            return this;
+        }
 
         Builder withIssueType(String issueType) {
             revision.issueType = issueType;

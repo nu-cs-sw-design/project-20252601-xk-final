@@ -20,7 +20,7 @@ public class StyleRevisionClassVisitor extends ClassVisitor {
 
     public StyleRevisionClassVisitor(OutputStream output) {
         super(ASM7);
-        revisionPrinter = new BasicStyleRevisionPrinter(output);
+        this.revisionPrinter = new BasicStyleRevisionPrinter(output);
     }
 
     public void addStyleReviser(ClassStyleReviser reviser) {

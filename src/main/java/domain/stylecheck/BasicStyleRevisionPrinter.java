@@ -13,28 +13,35 @@ public class BasicStyleRevisionPrinter extends StyleRevisionPrinter {
     @Override
     void print(StyleRevision revision) throws IOException {
 
-        output.write("\n".getBytes(StandardCharsets.UTF_8));
+        print("\n");
 
+        String originalName = revision.getOriginalName();
         String issueType = revision.getIssueType();
         String issueDetails = revision.getIssueDetails();
         String suggestedFix = revision.getSuggestedFix();
 
+        if (!originalName.isEmpty()) {
+            print("IDENTIFIER:\n");
+            print(originalName);
+            print("\n");
+        }
+
         if (!issueType.isEmpty()) {
-            output.write("ISSUE TYPE:\n".getBytes(StandardCharsets.UTF_8));
-            output.write(issueType.getBytes(StandardCharsets.UTF_8));
-            output.write("\n".getBytes(StandardCharsets.UTF_8));
+            print("ISSUE TYPE:\n");
+            print(issueType);
+            print("\n");
         }
 
         if (!issueDetails.isEmpty()) {
-            output.write("ISSUE DETAILS:\n".getBytes(StandardCharsets.UTF_8));
-            output.write(issueDetails.getBytes(StandardCharsets.UTF_8));
-            output.write("\n".getBytes(StandardCharsets.UTF_8));
+            print("ISSUE DETAILS:\n");
+            print(issueDetails);
+            print("\n");
         }
 
         if (!suggestedFix.isEmpty()) {
-            output.write("SUGGESTED FIX:\n".getBytes(StandardCharsets.UTF_8));
-            output.write(suggestedFix.getBytes(StandardCharsets.UTF_8));
-            output.write("\n".getBytes(StandardCharsets.UTF_8));
+            print("SUGGESTED FIX:\n");
+            print(suggestedFix);
+            print("\n");
         }
 
     }

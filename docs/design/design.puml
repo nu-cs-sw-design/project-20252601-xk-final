@@ -36,35 +36,41 @@ package domain
         {
             -revisions : List<StyleRevision>
 
-            ~{abstract} checkClassName(name : String) : boolean
-            ~{abstract} checkVariableOrMethodName(name : String) : boolean
-            ~{abstract} checkStaticConstantName(name : String) : boolean
+            ~{final} checkClassName(name : String) : boolean
+            ~{final} checkVariableOrMethodName(name : String) : boolean
+            ~{final} checkStaticConstantName(name : String) : boolean
+            ~{abstract} checkClassNameInternal(name : String, revisionBuilder : StyleRevision::Builder) : boolean
+            ~{abstract} checkVariableOrMethodNameInternal(name : String, revisionBuilder : StyleRevision::Builder) : boolean
+            ~{abstract} checkStaticConstantNameInternal(name : String, revisionBuilder : StyleRevision::Builder) : boolean
             ~{final} saveRevision(revision : StyleRevision) : void
             ~{final} getRevisions() : List<StyleRevision>
-            ~{final} validateNameInput(name : String) : void
+            -validateNameInput(name : String) : void
         }
 
         +class NamingConventionStyleReviser
         {
-            ~checkClassName(name : String) : boolean
-            ~checkVariableOrMethodName(name : String) : boolean
-            ~checkStaticConstantName(name : String) : boolean
+            ~checkClassNameInternal(name : String, revisionBuilder : StyleRevision::Builder) : boolean
+            ~checkVariableOrMethodNameInternal(name : String, revisionBuilder : StyleRevision::Builder) : boolean
+            ~checkStaticConstantNameInternal(name : String, revisionBuilder : StyleRevision::Builder) : boolean
         }
 
         +class ReadableNamingStyleReviser
         {
-            ~checkClassName(name : String) : boolean
-            ~checkVariableOrMethodName(name : String) : boolean
-            ~checkStaticConstantName(name : String) : boolean
-            -checkReadability(name : String) : boolean
+            ~checkClassNameInternal(name : String, revisionBuilder : StyleRevision::Builder) : boolean
+            ~checkVariableOrMethodNameInternal(name : String, revisionBuilder : StyleRevision::Builder) : boolean
+            ~checkStaticConstantNameInternal(name : String, revisionBuilder : StyleRevision::Builder) : boolean
+            -checkReadability(name : String, revisionBuilder : StyleRevision::Builder) : boolean
+            -isReadable(name : String) : boolean
         }
 
         ~class StyleRevision
         {
+            -originalName : String
             -issueLocation : String
             -issueDetails : String
             -suggestedFix : String
 
+            ~getOriginalName() : String
             ~getIssueLocation() : String
             ~getIssueDetails() : String
             ~getSuggestedFix() : String
@@ -72,6 +78,7 @@ package domain
 
         ~class StyleRevision::Builder <<static>>
         {
+            ~withOriginalName(originalName : String) : StyleRevision::Builder
             ~withIssueLocation(issueLocation : String) : StyleRevision::Builder
             ~withIssueType(issueType : String) : StyleRevision::Builder
             ~withSuggestedFix(suggestedFix : String) : StyleRevision::Builder
@@ -83,6 +90,7 @@ package domain
             -output : OutputStream
 
             ~StyleRevisionPrinter(output : OutputStream)
+            ~{final} print(data : String) : void
             ~{abstract} print(revision : StyleRevision, to : OutputStream) : void
         }
 
@@ -112,6 +120,11 @@ NamingConventionStyleReviser --|> ClassStyleReviser
 ReadableNamingStyleReviser --|> ClassStyleReviser
 StyleRevision +-- StyleRevision::Builder
 ClassStyleReviser --> StyleRevision
+NamingConventionStyleReviser ..> StyleRevision
+ReadableNamingStyleReviser ..> StyleRevision
+ClassStyleReviser ..> StyleRevision::Builder
+NamingConventionStyleReviser ..> StyleRevision::Builder
+ReadableNamingStyleReviser ..> StyleRevision::Builder
 StyleRevisionPrinter ..> StyleRevision
-BasicStyleRevisionPrinter --|> StyleRevisionPrinter
+BasicStyleRevisionPrinter -l-|> StyleRevisionPrinter
 @enduml

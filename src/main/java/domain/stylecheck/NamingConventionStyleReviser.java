@@ -3,12 +3,8 @@ package domain.stylecheck;
 public class NamingConventionStyleReviser extends ClassStyleReviser {
 
     @Override
-    public boolean checkClassName(String name) {
+    boolean checkClassNameInternal(String name, StyleRevision.Builder revisionBuilder) {
 
-        validateNameInput(name);
-
-        StyleRevision.Builder revisionBuilder = new StyleRevision.Builder();
-        revisionBuilder.withIssueType("Class Name");
         revisionBuilder.withIssueDetails("Class name should be PascalCase.");
 
         char[] nameCharArray = name.toCharArray();
@@ -50,19 +46,15 @@ public class NamingConventionStyleReviser extends ClassStyleReviser {
             return true;
         }
 
-        revisionBuilder.withSuggestedFix("Potentially change name to " + fixedName);
+        revisionBuilder.withSuggestedFix("Potentially change name to \"" + fixedName + "\".");
         saveRevision(revisionBuilder.build());
         return false;
 
     }
 
     @Override
-    public boolean checkVariableOrMethodName(String name) {
+    boolean checkVariableOrMethodNameInternal(String name, StyleRevision.Builder revisionBuilder) {
 
-        validateNameInput(name);
-
-        StyleRevision.Builder revisionBuilder = new StyleRevision.Builder();
-        revisionBuilder.withIssueType("Variable/Method Name");
         revisionBuilder.withIssueDetails("Variable/method name should be camelCase.");
 
         char[] nameCharArray = name.toCharArray();
@@ -104,19 +96,15 @@ public class NamingConventionStyleReviser extends ClassStyleReviser {
             return true;
         }
 
-        revisionBuilder.withSuggestedFix("Potentially change name to " + fixedName);
+        revisionBuilder.withSuggestedFix("Potentially change name to \"" + fixedName + "\".");
         saveRevision(revisionBuilder.build());
         return false;
 
     }
 
     @Override
-    public boolean checkStaticConstantName(String name) {
+    boolean checkStaticConstantNameInternal(String name, StyleRevision.Builder revisionBuilder) {
 
-        validateNameInput(name);
-
-        StyleRevision.Builder revisionBuilder = new StyleRevision.Builder();
-        revisionBuilder.withIssueType("Static Constant Name");
         revisionBuilder.withIssueDetails("Constant name should be UPPER_SNAKE_CASE.");
 
         char[] nameCharArray = name.toCharArray();
@@ -181,7 +169,7 @@ public class NamingConventionStyleReviser extends ClassStyleReviser {
             return true;
         }
 
-        revisionBuilder.withSuggestedFix("Potentially change name to " + fixedName);
+        revisionBuilder.withSuggestedFix("Potentially change name to \"" + fixedName + "\".");
         saveRevision(revisionBuilder.build());
         return false;
 
