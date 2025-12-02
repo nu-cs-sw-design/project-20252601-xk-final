@@ -5,32 +5,34 @@ package presentation
     {
         +main(args : String[]) : void
     }
+
+    +class BasicStyleRevisionPrinter
+    {
+        ~print(revision : StyleRevision, to : OutputStream) : void
+    }
 }
 
 package domain
 {
     package stylecheck
     {
-        +class StyleRevisionClassVisitor
+        +class ClassStyleRevisionManager
         {
             -revisers : List<ClassStyleReviser>
             -revisionPrinter : StyleRevisionPrinter
 
-            +StyleRevisionClassVisitor()
+            +ClassStyleRevisionManager(output : OutputStream)
 
             +addStyleReviser(reviser : ClassStyleReviser) : void
             +removeStyleReviser(reviser : ClassStyleReviser) : void
-            +setRevisionPrinter(printer : StyleRevisionPrinter) : void
-            +visitField(…) : FieldVisitor
-            +visitMethod(…) : MethodVisitor
-            +visitInnerClass(…) : void
-            +visitEnd() : void
+            +revise(classNode : ClassNode) : void
+            -reviseClassName(name : String) : void
+            -reviseField(field : FieldNode) : void
+            -reviseMethod(method : MethodNode) : void
+            -reviseInnerClass(innerClass : innerClassNode) : void
+            -printRevisions() : void
             -getLocalClassName(internalName : String) : String
         }
-        note left of StyleRevisionClassVisitor::visitEnd
-          get all the revisions from each reviser
-          and print using the revisionPrinter
-        end note
 
         ~abstract class ClassStyleReviser
         {
@@ -93,11 +95,6 @@ package domain
             ~{final} print(data : String) : void
             ~{abstract} print(revision : StyleRevision, to : OutputStream) : void
         }
-
-        ~class BasicStyleRevisionPrinter
-        {
-            ~print(revision : StyleRevision, to : OutputStream) : void
-        }
     }
 }
 
@@ -108,14 +105,32 @@ package datasource
 
 package asm
 {
-    +abstract class ClassVisitor
+    +class ClassNode
+    {
+    }
+
+    +class FieldNode
+    {
+    }
+
+    +class MethodNode
+    {
+    }
+
+    +class InnerClassNode
     {
     }
 }
 
-StyleRevisionClassVisitor --|> ClassVisitor
-StyleRevisionClassVisitor --> ClassStyleReviser
-StyleRevisionClassVisitor --> StyleRevisionPrinter
+Main ..> ClassStyleRevisionManager
+Main ..> asm
+
+ClassStyleRevisionManager --> ClassStyleReviser
+ClassStyleRevisionManager --> StyleRevisionPrinter
+ClassStyleRevisionManager ..> ClassNode
+ClassStyleRevisionManager ..> FieldNode
+ClassStyleRevisionManager ..> MethodNode
+ClassStyleRevisionManager ..> InnerClassNode
 NamingConventionStyleReviser --|> ClassStyleReviser
 ReadableNamingStyleReviser --|> ClassStyleReviser
 StyleRevision +-- StyleRevision::Builder
