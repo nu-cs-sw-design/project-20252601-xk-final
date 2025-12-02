@@ -5,11 +5,6 @@ package presentation
     {
         +main(args : String[]) : void
     }
-
-    +class BasicStyleRevisionPrinter
-    {
-        ~print(revision : StyleRevision, to : OutputStream) : void
-    }
 }
 
 package domain
@@ -94,6 +89,25 @@ package domain
             ~StyleRevisionPrinter(output : OutputStream)
             ~{final} print(data : String) : void
             ~{abstract} print(revision : StyleRevision, to : OutputStream) : void
+        }
+
+        +class BasicStyleRevisionPrinter
+        {
+            ~print(revision : StyleRevision, to : OutputStream) : void
+        }
+    }
+
+    package classdiagram
+    {
+        +class PlantUMLGenerator
+        {
+            -classNodes : List<ClassNode>
+
+            +generateClassDiagram(rootDirectoryPath : String, output : OutputStream) : void
+            +generateClass(node : ClassNode) : String
+            -generateField(field : FieldNode) : String
+            -generateMethod(field : methodNode) : String
+            -generateInnerClass(innerClass : innerClassNode) : String
         }
     }
 }
