@@ -101,13 +101,52 @@ package domain
     {
         +class PlantUMLGenerator
         {
-            -classNodes : List<ClassNode>
+            -output : OutputStream
 
-            +generateClassDiagram(rootDirectoryPath : String, output : OutputStream) : void
-            +generateClass(node : ClassNode) : String
+            +PlantUMLGenerator(output : OutputStream)
+
+            +generateClassDiagram(classNodes : List<ClassNode>) : void
+            -generateClass(node : ClassNode) : String
             -generateField(field : FieldNode) : String
-            -generateMethod(field : methodNode) : String
+            -generateMethod(method : methodNode, classNode : String) : String
             -generateInnerClass(innerClass : innerClassNode) : String
+            -generateDependencies() : String
+            -getAccessModifierString() : String
+        }
+    }
+
+    package util
+    {
+        +class DomainClassNode
+        {
+            +name : String
+            +access : List<String>
+            +fields : List<DomainFieldNode>
+            +methods : List<DomainMethodNode>
+            +innerClasses : List<DomainClassNode>
+        }
+
+        +class DomainFieldNode
+        {
+            +name : String
+            +access : List<String>
+            +type : String
+        }
+
+        +class DomainMethodNode
+        {
+            +name : String
+            +access : List<String>
+            +parameterNames : List<String>
+            +parameterTypes : List<String>
+            +returnType : String
+        }
+
+        +class ASMToDomainNodeConverter
+        {
+            +createDomainClassNode(classNode : ClassNode) : DomainClassNode
+            +createDomainFieldNode(classNode : ClassNode) : DomainClassNode
+            +createDomainMethodNode(classNode : ClassNode) : DomainClassNode
         }
     }
 }
@@ -139,12 +178,18 @@ package asm
 Main ..> ClassStyleRevisionManager
 Main ..> asm
 
+ASMToDomainNodeConverter ..> DomainClassNode
+ASMToDomainNodeConverter ..> DomainFieldNode
+ASMToDomainNodeConverter ..> DomainMethodNode
+ASMToDomainNodeConverter ..> ClassNode
+ASMToDomainNodeConverter ..> FieldNode
+ASMToDomainNodeConverter ..> MethodNode
+
 ClassStyleRevisionManager --> ClassStyleReviser
 ClassStyleRevisionManager --> StyleRevisionPrinter
-ClassStyleRevisionManager ..> ClassNode
-ClassStyleRevisionManager ..> FieldNode
-ClassStyleRevisionManager ..> MethodNode
-ClassStyleRevisionManager ..> InnerClassNode
+ClassStyleRevisionManager ..> DomainClassNode
+ClassStyleRevisionManager ..> DomainFieldNode
+ClassStyleRevisionManager ..> DomainMethodNode
 NamingConventionStyleReviser --|> ClassStyleReviser
 ReadableNamingStyleReviser --|> ClassStyleReviser
 StyleRevision +-- StyleRevision::Builder
@@ -156,4 +201,8 @@ NamingConventionStyleReviser ..> StyleRevision::Builder
 ReadableNamingStyleReviser ..> StyleRevision::Builder
 StyleRevisionPrinter ..> StyleRevision
 BasicStyleRevisionPrinter -l-|> StyleRevisionPrinter
+
+PlantUMLGenerator ..> DomainClassNode
+PlantUMLGenerator ..> DomainFieldNode
+PlantUMLGenerator ..> DomainMethodNode
 @enduml
