@@ -119,27 +119,27 @@ package domain
     {
         +class DomainClassNode
         {
-            +name : String
-            +access : List<String>
-            +fields : List<DomainFieldNode>
-            +methods : List<DomainMethodNode>
-            +innerClasses : List<DomainClassNode>
+            ~name : String
+            ~access : List<String>
+            ~fields : List<DomainFieldNode>
+            ~methods : List<DomainMethodNode>
+            ~innerClasses : List<DomainClassNode>
         }
 
         +class DomainFieldNode
         {
-            +name : String
-            +access : List<String>
-            +type : String
+            ~name : String
+            ~access : List<String>
+            ~type : String
         }
 
         +class DomainMethodNode
         {
-            +name : String
-            +access : List<String>
-            +parameterNames : List<String>
-            +parameterTypes : List<String>
-            +returnType : String
+            ~name : String
+            ~access : List<String>
+            ~parameterNames : List<String>
+            ~parameterTypes : List<String>
+            ~returnType : String
         }
 
         +class ASMToDomainNodeConverter
