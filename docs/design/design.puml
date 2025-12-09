@@ -120,26 +120,42 @@ package domain
         +class DomainClassNode
         {
             ~name : String
-            ~access : List<String>
+            ~accessModifiers : List<String>
             ~fields : List<DomainFieldNode>
             ~methods : List<DomainMethodNode>
             ~innerClasses : List<DomainClassNode>
+
+            +getName() : String
+            +getAccessModifiers() : List<String>
+            +getFields() : List<DomainFieldNode>
+            +getMethods() : List<DomainFieldNode>
+            +getInnerClasses() : List<DomainFieldNode>
         }
 
         +class DomainFieldNode
         {
             ~name : String
-            ~access : List<String>
+            ~accessModifiers : List<String>
             ~type : String
+
+            +getName() : String
+            +getAccessModifiers() : List<String>
+            +getType() : String
         }
 
         +class DomainMethodNode
         {
             ~name : String
-            ~access : List<String>
+            ~accessModifiers : List<String>
             ~parameterNames : List<String>
             ~parameterTypes : List<String>
             ~returnType : String
+
+            +getName() : String
+            +getAccessModifiers() : List<String>
+            +getParameterNames() : List<DomainFieldNode>
+            +getParameterTypes() : List<DomainFieldNode>
+            +getReturnType() : String
         }
 
         +class ASMToDomainNodeConverter
