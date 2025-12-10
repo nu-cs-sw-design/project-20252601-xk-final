@@ -20,11 +20,11 @@ package domain
 
             +addStyleReviser(reviser : ClassStyleReviser) : void
             +removeStyleReviser(reviser : ClassStyleReviser) : void
-            +revise(classNode : ClassNode) : void
+            +revise(classNode : DomainClassNode) : void
             -reviseClassName(name : String) : void
-            -reviseField(field : FieldNode) : void
-            -reviseMethod(method : MethodNode) : void
-            -reviseInnerClass(innerClass : innerClassNode) : void
+            -reviseField(field : DomainFieldNode) : void
+            -reviseMethod(method : DomainMethodNode) : void
+            -reviseInnerClass(innerClass : DomainInnerClassNode) : void
             -printRevisions() : void
             -getLocalClassName(internalName : String) : String
         }
@@ -115,6 +115,29 @@ package domain
         }
     }
 
+    package dependencycheck {
+
+        +class CyclicDependencyChecker
+        {
+            -output : OutputStream
+
+            +CyclicDependencyChecker(output : OutputStream)
+            +generateReport(classNodes : List<DomainClassNode>) : void
+            -buildGraph(classNodes : List<DomainClassNode>) : Graph<DomainClassNode>
+            -checkGraph(graph : Graph<DomainClassNode>) : List<String>
+        }
+
+        -class CyclicDependencyChecker::Graph<T> <<static>>
+        {
+            ~nodes : Set<T>
+            ~edges : Set<List<T, T>>
+
+            ~addEdge(<List<T, T>) : void
+            ~getNeighbors(node : T) : Set<T>
+        }
+
+    }
+
     package util
     {
         +class DomainClassNode
@@ -176,11 +199,6 @@ package domain
     }
 }
 
-package datasource
-{
-
-}
-
 package asm
 {
     +class ClassNode
@@ -200,7 +218,12 @@ package asm
     }
 }
 
+Main ..> ASMToDomainNodeConverter
 Main ..> ClassStyleRevisionManager
+Main ..> PlantUMLGenerator
+Main ..> CyclicDependencyChecker
+Main ..> DomainClassNode
+
 Main ..> asm
 
 ASMToDomainNodeConverter ..> DomainClassNode
@@ -217,6 +240,7 @@ ClassStyleRevisionManager --> StyleRevisionPrinter
 ClassStyleRevisionManager ..> DomainClassNode
 ClassStyleRevisionManager ..> DomainFieldNode
 ClassStyleRevisionManager ..> DomainMethodNode
+ClassStyleRevisionManager ..> DomainInnerClassNode
 NamingConventionStyleReviser --|> ClassStyleReviser
 ReadableNamingStyleReviser --|> ClassStyleReviser
 StyleRevision +-- StyleRevision::Builder
@@ -232,4 +256,9 @@ BasicStyleRevisionPrinter -l-|> StyleRevisionPrinter
 PlantUMLGenerator ..> DomainClassNode
 PlantUMLGenerator ..> DomainFieldNode
 PlantUMLGenerator ..> DomainMethodNode
+
+CyclicDependencyChecker +-- CyclicDependencyChecker::Graph
+CyclicDependencyChecker ..> DomainClassNode
+CyclicDependencyChecker ..> DomainFieldNode
+CyclicDependencyChecker ..> DomainMethodNode
 @enduml
