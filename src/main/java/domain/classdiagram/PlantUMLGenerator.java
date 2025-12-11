@@ -26,7 +26,7 @@ public class PlantUMLGenerator {
 
         StringBuilder result = new StringBuilder();
 
-        result.append("@startuml\n\n");
+        result.append("\n@startuml\n\n");
 
         for (DomainClassNode node : classNodes) {
             result.append(generateClass(node));
@@ -43,7 +43,7 @@ public class PlantUMLGenerator {
 
         StringBuilder result = new StringBuilder();
 
-        String accessModifierTokens = getAccessModifierTokens(node.getAccessModifiers());
+        String accessModifierTokens = getAccessModifierTokens(node.getAccessModifiers(), true);
 
         result.append(accessModifierTokens);
         result.append(node.getName() + "\n");
@@ -51,7 +51,6 @@ public class PlantUMLGenerator {
         result.append("{\n");
 
         node.getFields().forEach(fieldNode -> result.append("    " + generateField(fieldNode)));
-        result.append("\n");
         node.getMethods().forEach(methodNode -> result.append("    " + generateMethod(methodNode)));
         result.append("}\n");
 
@@ -120,6 +119,7 @@ public class PlantUMLGenerator {
     private String generateDependencies(List<DomainClassNode> classNodes) {
 
         Set<String> classNames = new HashSet<>();
+        Set<String> seen = new HashSet<>();
         classNodes.forEach(classNode -> classNames.add(classNode.getName()));
 
         StringBuilder result = new StringBuilder();
@@ -147,8 +147,12 @@ public class PlantUMLGenerator {
                 List<String> involvedTypes = DomainTypeUtil.splitIntoSignificantTypes(field.getType());
                 for (var typeName : involvedTypes) {
                     if (includeExternalDependencies || classNames.contains(typeName)) {
-                        result.append(classNode.getName() + " --> " + typeName);
-                        result.append("\n");
+                        String newLine = classNode.getName() + " --> " + typeName;
+                        if (!seen.contains(newLine)) {
+                            result.append(newLine);
+                            result.append("\n");
+                            seen.add(newLine);
+                        }
                     }
                 }
             }
@@ -167,8 +171,12 @@ public class PlantUMLGenerator {
 
                 for (var typeName : involvedTypes) {
                     if ((includeExternalDependencies || classNames.contains(typeName)) && !classNode.getName().equals(typeName) && !typeName.isEmpty()) {
-                        result.append(classNode.getName() + " ..> " + typeName);
-                        result.append("\n");
+                        String newLine = classNode.getName() + " ..> " + typeName;
+                        if (!seen.contains(newLine)) {
+                            result.append(newLine);
+                            result.append("\n");
+                            seen.add(newLine);
+                        }
                     }
                 }
 
@@ -209,7 +217,7 @@ public class PlantUMLGenerator {
             accessModifierStringBuilder.append("{static} ");
         }
 
-        if (accessModifiers.contains("final")) {
+        if (!className && accessModifiers.contains("final")) {
             accessModifierStringBuilder.append("{final} ");
         }
         else if (accessModifiers.contains("abstract")) {
@@ -222,6 +230,8 @@ public class PlantUMLGenerator {
         if (className) {
             if (accessModifiers.contains("interface"))
                 accessModifierStringBuilder.append("interface ");
+            else if (accessModifiers.contains("enum"))
+                accessModifierStringBuilder.append("enum ");
             else
                 accessModifierStringBuilder.append("class ");
         }

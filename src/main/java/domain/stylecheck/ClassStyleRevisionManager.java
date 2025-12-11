@@ -4,7 +4,6 @@ import domain.util.DomainClassNode;
 import domain.util.DomainFieldNode;
 import domain.util.DomainInnerClassNode;
 import domain.util.DomainMethodNode;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -29,27 +28,31 @@ public class ClassStyleRevisionManager {
         revisers.remove(reviser);
     }
 
-    public void revise(DomainClassNode classNode) {
-
-        reviseClassName(classNode.getName());
-        classNode.getFields().forEach(this::reviseField);
-        classNode.getMethods().forEach(this::reviseMethod);
-        classNode.getInnerClasses().forEach(this::reviseInnerClass);
+    public void generateReport(List<DomainClassNode> classNodes) {
+        classNodes.forEach(this::revise);
 
         try {
             printRevisions();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void revise(DomainClassNode classNode) {
+
+        reviseClassName(classNode);
+        classNode.getFields().forEach(this::reviseField);
+        classNode.getMethods().forEach(this::reviseMethod);
+        classNode.getInnerClasses().forEach(this::reviseInnerClass);
 
     }
 
-    public void revise(List<DomainClassNode> classNodes) {
-        classNodes.forEach(this::revise);
+    private void reviseClassName(DomainClassNode classNode) {
+        revisers.forEach(reviser -> reviser.checkClassName(classNode.getLocalName()));
     }
 
-    private void reviseClassName(String name) {
-        revisers.forEach(reviser -> reviser.checkClassName(getLocalClassName(name)));
+    private void reviseClassName(DomainInnerClassNode innerClassNode) {
+        revisers.forEach(reviser -> reviser.checkClassName(innerClassNode.getLocalName()));
     }
 
     private void reviseField(DomainFieldNode field) {
@@ -76,7 +79,7 @@ public class ClassStyleRevisionManager {
 
     private void reviseInnerClass(DomainInnerClassNode innerClass) {
 
-        reviseClassName(innerClass.getName());
+        reviseClassName(innerClass);
 
     }
 
@@ -90,24 +93,8 @@ public class ClassStyleRevisionManager {
             }
         }
         if (revisionCount == 0) {
-            revisionPrinter.print("There are no revisions!");
+            revisionPrinter.print("There are no revisions!\n");
         }
-    }
-
-    // Helper method for turning ASM internal class name into raw local class name as seen in source code
-    @Nullable
-    private String getLocalClassName(String fullName) {
-
-        if (fullName.isEmpty()) {
-            return null;
-        }
-
-        int cutoff = fullName.lastIndexOf('.');
-        if (cutoff < 0) {
-            return fullName;
-        }
-
-        return fullName.substring(cutoff + 1);
     }
 
 }

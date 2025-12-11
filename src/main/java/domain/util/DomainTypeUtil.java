@@ -2,11 +2,8 @@ package domain.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class DomainTypeUtil {
-
-    public static final Set<String> PRIMITIVE_TYPE_NAMES = Set.of("boolean", "char", "byte", "short", "int", "float", "long", "double");
 
     public static List<String> splitIntoSignificantTypes(String name) {
 
@@ -17,7 +14,7 @@ public class DomainTypeUtil {
         List<String> results = new ArrayList<>();
 
         if (typeParamStart < 0) {
-            if (!PRIMITIVE_TYPE_NAMES.contains(name))
+            if (!PrimitiveType.hasValue(name))
                 results.add(name);
             return results;
         }

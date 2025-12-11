@@ -44,7 +44,7 @@ public class Main {
             switch (instruction) {
                 case "style-check" -> {
                     ClassStyleRevisionManager classStyleRevisionManager = new ClassStyleRevisionManager(System.out);
-                    classStyleRevisionManager.revise(domainClassNodes);
+                    classStyleRevisionManager.generateReport(domainClassNodes);
                 }
                 case "diagram" -> {
                     PlantUMLGenerator plantUMLGenerator = new PlantUMLGenerator(System.out, false);

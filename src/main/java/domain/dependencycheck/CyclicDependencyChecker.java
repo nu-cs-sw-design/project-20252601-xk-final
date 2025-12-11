@@ -34,16 +34,25 @@ public class CyclicDependencyChecker {
         output.write(result.toString().getBytes(StandardCharsets.UTF_8));
     }
 
+    // Graph search algorithm yay!
     private List<String> checkGraph(Graph<DomainClassNode> graph) {
 
+        // Newly visited nodes
         List<DomainClassNode> visitedNodes = new ArrayList<>();
+        // Already checked nodes (important for backtracking from dead ends)
         List<DomainClassNode> reVisitedNodes = new ArrayList<>();
+
         List<String> cycles = new ArrayList<>();
 
         DomainClassNode start = graph.nodes.iterator().next();
         DomainClassNode current = start;
+        Set<DomainClassNode> startNeighbors = graph.getNeighbors(start);
 
-        while (visitedNodes.size() < graph.nodes.size() && !graph.getNeighbors(start).isEmpty()) {
+        while (visitedNodes.size() < graph.nodes.size()) {
+
+            startNeighbors.removeAll(reVisitedNodes);
+            if (startNeighbors.isEmpty())
+                break;
 
             if (!visitedNodes.contains(current)) {
                 visitedNodes.add(current);

@@ -7,6 +7,7 @@ public class DomainClassNode {
 
     String name;
     String superName;
+    String localName;
     List<String> interfaces = new ArrayList<>();
     List<String> accessModifiers = new ArrayList<>();
     List<DomainFieldNode> fields = new ArrayList<>();
@@ -21,6 +22,10 @@ public class DomainClassNode {
 
     public String getSuperName() {
         return superName;
+    }
+
+    public String getLocalName() {
+        return localName;
     }
 
     public List<String> getInterfaces() {

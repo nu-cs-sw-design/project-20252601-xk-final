@@ -20,13 +20,14 @@ package domain
 
             +addStyleReviser(reviser : ClassStyleReviser) : void
             +removeStyleReviser(reviser : ClassStyleReviser) : void
+            +generateReport(classNodes : List<DomainClassNode>) : void
             +revise(classNode : DomainClassNode) : void
-            -reviseClassName(name : String) : void
+            -reviseClassName(classNode : DomainClassNode) : void
+            -reviseClassName(innerClassNode : DomainInnerClassNode) : void
             -reviseField(field : DomainFieldNode) : void
             -reviseMethod(method : DomainMethodNode) : void
             -reviseInnerClass(innerClass : DomainInnerClassNode) : void
             -printRevisions() : void
-            -getLocalClassName(internalName : String) : String
         }
 
         ~abstract class ClassStyleReviser
@@ -106,12 +107,13 @@ package domain
             +PlantUMLGenerator(output : OutputStream)
 
             +generateClassDiagram(classNodes : List<ClassNode>) : void
-            -generateClass(node : ClassNode) : String
-            -generateField(field : FieldNode) : String
-            -generateMethod(method : methodNode, classNode : String) : String
-            -generateInnerClass(innerClass : innerClassNode) : String
-            -generateDependencies() : String
-            -getAccessModifierString() : String
+            -generateClass(node : DomainClassNode) : String
+            -generateField(field : DomainFieldNode) : String
+            -generateMethod(method : DomainMethodNode, className : String) : String
+            -generateInnerClass(innerClass : DomainInnerClassNode) : String
+            -generateDependencies(classNodes : List<ClassNode>) : String
+            -getAccessModifierTokens(accessModifiers : List<String>) : String
+            -getAccessModifierTokens(accessModifiers : List<String>, className : boolean) : String
         }
     }
 
@@ -190,11 +192,57 @@ package domain
             +getAccessModifiers() : List<String>
         }
 
+        +interface DomainClassNodeCreator<T>
+        {
+            +{abstract} createDomainClassNode(classNode : ClassNode) : DomainClassNode
+        }
+
+        +interface DomainFieldNodeCreator<T>
+        {
+            +{abstract} createDomainFieldNode(fieldNode : FieldNode) : DomainFieldNode
+        }
+
+        +interface DomainMethodNodeCreator<T>
+        {
+            +{abstract} createDomainMethodNode(methodNode : MethodNode, localClassName : String) : DomainMethodNode
+        }
+
+        +interface DomainInnerClassNodeCreator<T>
+        {
+            +{abstract} createDomainInnerClassNode(innerClassNode : InnerClassNode) : DomainInnerClassNode
+        }
+
         +class ASMToDomainNodeConverter
         {
             +createDomainClassNode(classNode : ClassNode) : DomainClassNode
-            +createDomainFieldNode(classNode : ClassNode) : DomainClassNode
-            +createDomainMethodNode(classNode : ClassNode) : DomainClassNode
+            +createDomainFieldNode(fieldNode : FieldNode) : DomainFieldNode
+            +createDomainMethodNode(methodNode : MethodNode, localClassName : String) : DomainMethodNode
+            +createDomainInnerClassNode(innerClassNode : InnerClassNode) : DomainInnerClassNode
+            -getLocalClassName(internalName : String) : String
+            -getAccessModifierStrings(access : int) : List<String>
+        }
+
+        +class DomainTypeUtil
+        {
+            +{static} splitIntoSignificantTypes(name : String) : List<String>
+        }
+
+        +enum PrimitiveType
+        {
+            BOOLEAN("boolean"),
+            CHAR("char"),
+            BYTE("byte"),
+            SHORT("short"),
+            INT("int"),
+            FLOAT("float"),
+            LONG("long"),
+            DOUBLE("double"),
+            VOID("void")
+
+            -PrimitiveType(name : String)
+            +{static} tryGetValue(name : String) : PrimitiveType
+            +{static} hasValue(name : String) : boolean
+            +toString() : String
         }
     }
 }
@@ -234,6 +282,21 @@ ASMToDomainNodeConverter ..> ClassNode
 ASMToDomainNodeConverter ..> FieldNode
 ASMToDomainNodeConverter ..> MethodNode
 ASMToDomainNodeConverter ..> InnerClassNode
+DomainClassNode --> DomainFieldNode
+DomainClassNode --> DomainMethodNode
+DomainClassNode --> DomainInnerClassNode
+DomainClassNode ..> DomainFieldNode
+DomainClassNode ..> DomainMethodNode
+DomainClassNode ..> DomainInnerClassNode
+DomainTypeUtil ..> PrimitiveType
+ASMToDomainNodeConverter ..|> DomainClassNodeCreator
+ASMToDomainNodeConverter ..|> DomainFieldNodeCreator
+ASMToDomainNodeConverter ..|> DomainMethodNodeCreator
+ASMToDomainNodeConverter ..|> DomainInnerClassNodeCreator
+DomainClassNodeCreator .u.> DomainClassNode
+DomainFieldNodeCreator .u.> DomainFieldNode
+DomainMethodNodeCreator .u.> DomainMethodNode
+DomainInnerClassNodeCreator .u.> DomainInnerClassNode
 
 ClassStyleRevisionManager --> ClassStyleReviser
 ClassStyleRevisionManager --> StyleRevisionPrinter
@@ -256,9 +319,11 @@ BasicStyleRevisionPrinter -l-|> StyleRevisionPrinter
 PlantUMLGenerator ..> DomainClassNode
 PlantUMLGenerator ..> DomainFieldNode
 PlantUMLGenerator ..> DomainMethodNode
+PlantUMLGenerator ..> DomainTypeUtil
 
 CyclicDependencyChecker +-- CyclicDependencyChecker::Graph
 CyclicDependencyChecker ..> DomainClassNode
 CyclicDependencyChecker ..> DomainFieldNode
 CyclicDependencyChecker ..> DomainMethodNode
+CyclicDependencyChecker ..> DomainTypeUtil
 @enduml

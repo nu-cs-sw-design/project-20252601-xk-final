@@ -11,7 +11,7 @@ import org.objectweb.asm.tree.MethodNode;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ASMToDomainNodeConverter {
+public class ASMToDomainNodeConverter implements DomainClassNodeCreator<ClassNode>, DomainFieldNodeCreator<FieldNode>, DomainMethodNodeCreator<MethodNode>, DomainInnerClassNodeCreator<InnerClassNode> {
 
     public DomainClassNode createDomainClassNode(ClassNode classNode) {
 
@@ -19,10 +19,11 @@ public class ASMToDomainNodeConverter {
 
         result.name = Type.getObjectType(classNode.name).getClassName();
         result.superName = Type.getObjectType(classNode.superName).getClassName();
+        result.localName = getLocalClassName(classNode.name);
         result.interfaces = classNode.interfaces.stream().map(internalName -> Type.getObjectType(internalName).getClassName()).toList();
         result.accessModifiers = getAccessModifierStrings(classNode.access);
-        result.fields = classNode.fields.stream().map(this::createDomainFieldNode).toList();
-        result.methods = classNode.methods.stream().filter(methodNode -> !methodNode.name.contains("lambda$")).map(methodNode -> createDomainMethodNode(methodNode, getLocalClassName(classNode.name))).toList();
+        result.fields = classNode.fields.stream().filter(fieldNode -> (fieldNode.access & Opcodes.ACC_SYNTHETIC) == 0).map(this::createDomainFieldNode).toList();
+        result.methods = classNode.methods.stream().filter(methodNode -> !methodNode.name.contains("lambda$") && (methodNode.access & Opcodes.ACC_SYNTHETIC) == 0).map(methodNode -> createDomainMethodNode(methodNode, getLocalClassName(classNode.name))).toList();
         result.innerClasses = classNode.innerClasses.stream().map(this::createDomainInnerClassNode).toList();
 
         return result;
@@ -48,7 +49,7 @@ public class ASMToDomainNodeConverter {
 
         DomainMethodNode result = new DomainMethodNode();
 
-        if (methodNode.name.equals("<init>")) {
+        if (methodNode.name.contains("<")) {
             result.name = localClassName;
             result.returnType = "";
         }
@@ -63,9 +64,9 @@ public class ASMToDomainNodeConverter {
         result.accessModifiers = getAccessModifierStrings(methodNode.access);
 
         if (methodNode.parameters != null)
-            result.parameterNames = methodNode.parameters.stream().map(parameterNode -> parameterNode.name).toList();
+            result.parameterNames = methodNode.parameters.stream().map(parameterNode -> parameterNode.name != null ? parameterNode.name : "").toList();
         if (methodNode.localVariables != null) {
-            result.localVariableNames = methodNode.localVariables.stream().map(localVariableNode -> localVariableNode.name).toList();
+            result.localVariableNames = methodNode.localVariables.stream().map(localVariableNode -> localVariableNode.name != null ? localVariableNode.name : "").toList();
             result.localVariableTypes = methodNode.localVariables.stream().map(
                     localVariableNode -> {
                         if (localVariableNode.signature != null)
@@ -131,19 +132,25 @@ public class ASMToDomainNodeConverter {
             results.add("static");
         }
 
-        // Final/abstract
+        // Final/interface/abstract
         if ((access & Opcodes.ACC_FINAL) != 0) {
             results.add("final");
-        } else if ((access & Opcodes.ACC_ABSTRACT) != 0) {
-            results.add("abstract");
         } else if ((access & Opcodes.ACC_INTERFACE) != 0) {
             results.add("interface");
+        } else if ((access & Opcodes.ACC_ABSTRACT) != 0) {
+            results.add("abstract");
+        }
+
+        // Enum
+        if ((access & Opcodes.ACC_ENUM) != 0) {
+            results.add("enum");
         }
 
         return results;
 
     }
 
+    // Get Java variable type from ASM signature
     private String getVariableType(String signature) {
 
         List<String> results = new ArrayList<>();
@@ -152,6 +159,7 @@ public class ASMToDomainNodeConverter {
 
     }
 
+    // Get list of Java method argument types from ASM signature
     private List<String> getMethodArgumentTypes(String signature) {
 
         List<String> results = new ArrayList<>();
@@ -164,10 +172,13 @@ public class ASMToDomainNodeConverter {
 
         }
 
+        results.removeLast();
+
         return results;
 
     }
 
+    // Get Java method return type from ASM signature
     private String getMethodReturnType(String signature) {
 
         List<String> results = new ArrayList<>();
@@ -184,6 +195,7 @@ public class ASMToDomainNodeConverter {
 
     }
 
+    // Recursive helper method of doom for parsing ASM signature and recording the data types contained within
     private int addNextType(String signature, int readIndex, List<String> results) {
 
         char[] signatureArray = signature.toCharArray();
@@ -191,41 +203,48 @@ public class ASMToDomainNodeConverter {
         switch (signatureArray[readIndex]) {
 
             case 'Z':
-                results.add("boolean");
+                results.add(PrimitiveType.BOOLEAN.toString());
                 return readIndex + 1;
             case 'C':
-                results.add("char");
+                results.add(PrimitiveType.CHAR.toString());
                 return readIndex + 1;
             case 'B':
-                results.add("byte");
+                results.add(PrimitiveType.BYTE.toString());
                 return readIndex + 1;
             case 'S':
-                results.add("short");
+                results.add(PrimitiveType.SHORT.toString());
                 return readIndex + 1;
             case 'I':
-                results.add("int");
+                results.add(PrimitiveType.INT.toString());
                 return readIndex + 1;
             case 'F':
-                results.add("float");
+                results.add(PrimitiveType.FLOAT.toString());
                 return readIndex + 1;
             case 'J':
-                results.add("long");
+                results.add(PrimitiveType.LONG.toString());
                 return readIndex + 1;
             case 'D':
-                results.add("double");
+                results.add(PrimitiveType.DOUBLE.toString());
                 return readIndex + 1;
-            case '[':
+            case 'V':
+                results.add(PrimitiveType.VOID.toString());
+                return readIndex + 1;
+            case 'T':
+                results.add("T");
+                return signature.indexOf(';', readIndex + 1);
+            case '[': // Array : read from next character to find out the contained type
                 readIndex = addNextType(signature, readIndex + 1, results);
                 String arrayElementType = results.getLast();
                 results.set(results.size() - 1, arrayElementType + "[]");
                 return readIndex;
-            case 'L':
+            case 'L': // Object : requires reading until the end of the class name
                 int endMarkerIndex = signature.indexOf(';', readIndex + 1);
                 int bracketIndex = signature.indexOf('<', readIndex + 1, endMarkerIndex);
                 if (bracketIndex < 0) {
                     results.add(signature.substring(readIndex + 1, endMarkerIndex).replace('/', '.'));
                     readIndex = endMarkerIndex + 1;
                 }
+                // Type parameters require an inner recursion for reading the contained parameters
                 else {
                     results.add(signature.substring(readIndex + 1, bracketIndex).replace('/', '.'));
                     readIndex = bracketIndex;
